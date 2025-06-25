@@ -69,13 +69,34 @@ function App() {
     }
   }
 
+  const extractTextFromTxt = async (file: File): Promise<string> => {
+    try {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const text = e.target?.result as string
+          resolve(text.trim())
+        }
+        reader.onerror = () => {
+          reject(new Error('Failed to read text file.'))
+        }
+        reader.readAsText(file)
+      })
+    } catch (error) {
+      console.error('Error reading text file:', error)
+      throw new Error('Failed to read text file. Please make sure the file is a valid text file and try again.')
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    // Check if file is PDF or DOCX
-    if (file.type !== 'application/pdf' && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      setError('Please select a valid PDF or DOCX file.')
+    // Check if file is PDF, DOCX, or TXT
+    if (file.type !== 'application/pdf' && 
+        file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
+        file.type !== 'text/plain') {
+      setError('Please select a valid PDF, DOCX, or TXT file.')
       return
     }
 
@@ -90,6 +111,8 @@ function App() {
         extractedText = await extractTextFromPDF(file)
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         extractedText = await extractTextFromDocx(file)
+      } else if (file.type === 'text/plain') {
+        extractedText = await extractTextFromTxt(file)
       }
 
       if (!extractedText.trim()) {
@@ -163,7 +186,7 @@ function App() {
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Word & Character Counter</h1>
           <p className="text-muted-foreground mt-2">
-            Paste text, type manually, or upload a PDF or DOCX file to count words and characters
+            Paste text, type manually, or upload a PDF, DOCX, or TXT file to count words and characters
           </p>
         </div>
 
@@ -186,7 +209,7 @@ function App() {
                 <Input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.docx"
+                  accept=".pdf,.docx,.txt"
                   onChange={handleFileUpload}
                   disabled={isLoading}
                   className="flex-1"
@@ -214,7 +237,7 @@ function App() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Enter or paste your text here, or upload a PDF or DOCX file above..."
+                placeholder="Enter or paste your text here, or upload a PDF, DOCX, or TXT file above..."
                 value={text}
                 onChange={handleTextChange}
                 className="min-h-[200px] resize-none"
