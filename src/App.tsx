@@ -27,6 +27,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [urlError, setUrlError] = useState<string | null>(null)
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
@@ -93,7 +95,7 @@ function App() {
     if (file.type !== 'application/pdf' && 
         file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
         file.type !== 'text/plain') {
-      setError('Please select a valid PDF, DOCX, or TXT file.')
+      setFileError('Please select a valid PDF, DOCX, or TXT file.')
       return
     }
 
@@ -101,7 +103,8 @@ function App() {
     setText('')
     setResults(null)
     setFileName(null)
-    setError(null)
+    setFileError(null)
+    setUrlError(null)
 
     setIsLoading(true)
     setFileName(file.name)
@@ -118,7 +121,7 @@ function App() {
       }
 
       if (!extractedText.trim()) {
-        setError('No text could be extracted from this file. It may be a scanned document or contain only images, which cannot be processed for text. Please try another file.')
+        setFileError('No text could be extracted from this file. It may be a scanned document or contain only images, which cannot be processed for text. Please try another file.')
         setText('')
         setResults(null)
         setFileName(null)
@@ -129,7 +132,7 @@ function App() {
       // Auto-count the extracted text
       countWordsAndCharacters(extractedText)
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred while processing the file.')
+      setFileError(error instanceof Error ? error.message : 'An error occurred while processing the file.')
       setFileName(null)
     } finally {
       setIsLoading(false)
@@ -175,13 +178,9 @@ function App() {
     if (fileName) {
       setFileName(null)
     }
-  }
-
-  const clearAll = () => {
-    setText('')
-    setResults(null)
-    setFileName(null)
-    setError(null)
+    // Clear errors when user starts typing
+    setFileError(null)
+    setUrlError(null)
   }
 
   const copyToClipboard = async () => {
@@ -200,6 +199,125 @@ function App() {
     }
   }
 
+  const [url, setUrl] = useState('')
+  const [isUrlLoading, setIsUrlLoading] = useState(false)
+
+  const extractTextFromWebpage = async (url: string) => {
+    try {
+      const response = await fetch(url)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const html = await response.text()
+      
+      // Parse HTML and extract text from body
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(html, 'text/html')
+      
+      // Remove script, style, head, and other non-content elements
+      const elementsToRemove = doc.querySelectorAll('script, style, head, nav, footer, header, aside, noscript, iframe, img, video, audio, canvas, svg, meta, link, title')
+      elementsToRemove.forEach(el => el.remove())
+      
+      // Extract text from body
+      const body = doc.body
+      if (!body) {
+        throw new Error('No body content found on the webpage.')
+      }
+      
+      // Get text content and clean it up
+      let text = body.textContent || body.innerText || ''
+      
+      // Clean up the text: remove extra whitespace, normalize line breaks
+      text = text
+        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+        .replace(/\n\s*\n/g, '\n') // Replace multiple line breaks with single
+        .trim()
+      
+      return text
+    } catch (error) {
+      console.error('Error fetching webpage:', error)
+      
+      // Check for CORS or network errors
+      if (error instanceof TypeError) {
+        if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          throw new Error('Cannot access this site due to browser security restrictions (CORS). Try a different website or use the file upload option.')
+        }
+      }
+      
+      // Check for other network errors
+      if (error instanceof Error) {
+        if (error.message.includes('ERR_FAILED') || error.message.includes('ERR_NETWORK')) {
+          throw new Error('Network error: Cannot access this website. It may be blocked by browser security restrictions.')
+        }
+      }
+      
+      throw new Error(`Failed to fetch webpage: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const handleUrlSubmit = async () => {
+    if (!url.trim()) {
+      setUrlError('Please enter a valid URL.')
+      return
+    }
+
+    // Basic URL validation
+    try {
+      new URL(url)
+    } catch {
+      setUrlError('Please enter a valid URL (e.g., https://example.com)')
+      return
+    }
+
+    setIsUrlLoading(true)
+    setUrlError(null)
+    setFileError(null)
+
+    try {
+      const extractedText = await extractTextFromWebpage(url)
+      
+      if (!extractedText.trim()) {
+        setUrlError('No text content could be extracted from this webpage.')
+        // Clear previous content when extraction fails
+        setText('')
+        setResults(null)
+        setFileName(null)
+        return
+      }
+
+      // Clear previous file data and set new text
+      setText(extractedText)
+      setResults(null)
+      setFileName(null)
+      
+      // Auto-count the extracted text
+      countWordsAndCharacters(extractedText)
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching the webpage.'
+      setUrlError(errorMessage)
+      
+      // Clear previous content when fetch fails
+      setText('')
+      setResults(null)
+      setFileName(null)
+    } finally {
+      setIsUrlLoading(false)
+    }
+  }
+
+  const clearAll = () => {
+    setText('')
+    setResults(null)
+    setFileName(null)
+    setError(null)
+    setFileError(null)
+    setUrlError(null)
+    setUrl('')
+  }
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-4xl space-y-6">
@@ -211,14 +329,6 @@ function App() {
         </div>
 
         <div className="space-y-4">
-          {error && (
-            <Card className="bg-destructive/10 border-destructive text-destructive">
-              <CardContent className="py-4 text-center font-medium">
-                {error}
-              </CardContent>
-            </Card>
-          )}
-
           {/* File Upload Section */}
           <Card>
             <CardHeader>
@@ -236,6 +346,53 @@ function App() {
                   📄 Loaded: {fileName}
                 </div>
               )}
+
+              {fileError && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {fileError}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* URL Input Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Fetch from Webpage</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Input
+                  type="url"
+                  placeholder="https://example.com"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isUrlLoading || isLoading}
+                  className="flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUrlSubmit()
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleUrlSubmit}
+                  disabled={isUrlLoading || isLoading || !url.trim()}
+                  size="lg"
+                  className="px-8"
+                >
+                  {isUrlLoading ? 'Fetching...' : 'Fetch and Analyze'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Note: Some websites may not be accessible due to browser security restrictions (CORS).
+              </p>
+
+              {urlError && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {urlError}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -246,11 +403,11 @@ function App() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Enter or paste your text here, or upload a PDF, DOCX, or TXT file above..."
+                placeholder="Enter or paste your text here, upload a file above, or fetch from a webpage..."
                 value={text}
                 onChange={handleTextChange}
                 className="min-h-[200px] resize-none"
-                disabled={isLoading}
+                disabled={isLoading || isUrlLoading}
               />
 
               <div className="flex justify-center gap-4">
@@ -279,6 +436,12 @@ function App() {
                   Clear All
                 </Button>
               </div>
+
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {error}
+                </div>
+              )}
             </CardContent>
           </Card>
 
