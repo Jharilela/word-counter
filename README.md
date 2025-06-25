@@ -106,6 +106,6 @@ If not set, analytics is disabled and a warning is logged in the console.
 ---
 
 ## 📄 License
-MIT
+BUSL
 
 
