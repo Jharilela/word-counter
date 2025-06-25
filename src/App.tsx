@@ -24,6 +24,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
@@ -60,20 +61,27 @@ function App() {
     if (!file) return
 
     if (file.type !== 'application/pdf') {
-      alert('Please select a valid PDF file.')
+      setError('Please select a valid PDF file.')
       return
     }
 
     setIsLoading(true)
     setFileName(file.name)
+    setError(null)
 
     try {
       const extractedText = await extractTextFromPDF(file)
+      if (!extractedText.trim()) {
+        setError('No text could be extracted from this PDF. It may be a scanned or image-based PDF, which cannot be processed for text. Please try another file.')
+        setText('')
+        setResults(null)
+        return
+      }
       setText(extractedText)
       // Auto-count the extracted text
       countWordsAndCharacters(extractedText)
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'An error occurred while processing the PDF.')
+      setError(error instanceof Error ? error.message : 'An error occurred while processing the PDF.')
       setFileName(null)
     } finally {
       setIsLoading(false)
@@ -121,6 +129,7 @@ function App() {
     setText('')
     setResults(null)
     setFileName(null)
+    setError(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -224,6 +233,14 @@ function App() {
                     <div className="text-sm text-muted-foreground">Characters (with spaces)</div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {error && (
+            <Card className="bg-destructive/10 border-destructive text-destructive">
+              <CardContent className="py-4 text-center font-medium">
+                {error}
               </CardContent>
             </Card>
           )}
