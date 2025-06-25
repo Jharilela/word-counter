@@ -184,6 +184,22 @@ function App() {
     setError(null)
   }
 
+  const copyToClipboard = async () => {
+    if (!text.trim()) {
+      setError('No text to copy.')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(text)
+      // Show a brief success message (you could add a toast notification here)
+      setError(null)
+    } catch (error) {
+      console.error('Failed to copy text:', error)
+      setError('Failed to copy text to clipboard.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-4xl space-y-6">
@@ -245,6 +261,14 @@ function App() {
                   disabled={isLoading || !text.trim()}
                 >
                   Count Words and Characters
+                </Button>
+                <Button 
+                  onClick={copyToClipboard}
+                  size="lg"
+                  variant="outline"
+                  disabled={isLoading || !text.trim()}
+                >
+                  Copy Text
                 </Button>
                 <Button 
                   onClick={clearAll}
