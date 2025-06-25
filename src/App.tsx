@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './App.css'
 
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,7 @@ interface CountResults {
   charCountExcludingSpaces: number;
   charCountIncludingSpaces: number;
 }
-
+ 
 function App() {
   const [text, setText] = useState('')
   const [results, setResults] = useState<CountResults | null>(null)
@@ -326,57 +326,151 @@ function App() {
     setUrl('')
   }
 
+  // Realtime counting: useEffect on text
+  useEffect(() => {
+    if (text.trim()) {
+      countWordsAndCharacters(text)
+    } else {
+      setResults(null)
+    }
+  }, [text])
+
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="mx-auto max-w-4xl space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Word & Character Counter</h1>
-          <p className="text-muted-foreground mt-2">
-            Paste text, type manually, upload a PDF, DOCX, TXT, MD, or SRT file, or fetch from a webpage to count words and characters
-          </p>
+      {/* Header */}
+      <header className="w-full flex items-center justify-between border-b border-muted-foreground/10 px-2 py-2 mb-6">
+        <div className="flex flex-col gap-0.5 text-left">
+          <span className="font-bold text-lg leading-tight">Word & Character Counter</span>
+          <span className="text-xs text-muted-foreground leading-tight text-left">
+            Online free word counter, character counter, PDF, DOCX, TXT, SRT, Markdown, website text analyzer
+          </span>
         </div>
+        <div className="flex items-center gap-3">
+          <a href="https://github.com/emp0/word-counter" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.339-2.221-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.847-2.337 4.695-4.566 4.944.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.749 0 .267.18.578.688.48C19.138 20.203 22 16.447 22 12.021 22 6.484 17.523 2 12 2z"/></svg></a>
+          <a href="https://discord.gg/emp0" target="_blank" rel="noopener noreferrer" aria-label="Discord" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.1a.074.074 0 0 0-.078.037c-.34.607-.719 1.396-.984 2.013a18.524 18.524 0 0 0-5.59 0 12.51 12.51 0 0 0-.988-2.013.077.077 0 0 0-.078-.037A19.736 19.736 0 0 0 3.684 4.369a.069.069 0 0 0-.032.027C1.605 7.092.322 9.68.076 12.229c-.002.02.006.04.019.055a19.911 19.911 0 0 0 5.993 3.058.077.077 0 0 0 .084-.027c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.104 13.108 13.108 0 0 1-1.872-.893.077.077 0 0 1-.008-.128c.126-.094.252-.192.371-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.245.197.372.291a.077.077 0 0 1-.006.128 12.64 12.64 0 0 1-1.873.893.076.076 0 0 0-.04.105c.36.699.772 1.364 1.225 1.993a.076.076 0 0 0 .084.028 19.888 19.888 0 0 0 6.002-3.058.077.077 0 0 0 .019-.054c-.264-2.549-1.547-5.137-3.608-7.833a.061.061 0 0 0-.03-.028zM8.02 14.331c-1.183 0-2.156-1.085-2.156-2.419 0-1.333.955-2.418 2.156-2.418 1.21 0 2.175 1.095 2.156 2.418 0 1.334-.955 2.419-2.156 2.419zm7.974 0c-1.183 0-2.156-1.085-2.156-2.419 0-1.333.955-2.418 2.156-2.418 1.21 0 2.175 1.095 2.156 2.418 0 1.334-.946 2.419-2.156 2.419z"/></svg></a>
+          <a href="mailto:contact@emp0.com" aria-label="Email" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zM4 20V8.99l7.71 6.93c.18.16.43.16.61 0L20 8.99V20H4z"/></svg></a>
+          <a href="https://emp0.com" target="_blank" rel="noopener noreferrer" aria-label="emp0 website" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></a>
+        </div>
+      </header>
 
-        <div className="space-y-4">
-          {/* File Upload Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload File</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <DropZone
-                onFilesDrop={handleFilesDrop}
-                disabled={isLoading}
-                className="mb-4"
+      <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        {/* Left: Textarea (spans 2 columns on desktop) */}
+        <div className="md:col-span-2 flex flex-col h-full">
+          <Card className="flex-1 h-full">
+            <CardContent className="flex flex-col h-full p-0">
+              <Textarea
+                placeholder="Enter or paste your text here, upload a file, or fetch from a webpage..."
+                value={text}
+                onChange={handleTextChange}
+                className="flex-1 min-h-[300px] h-full resize-none text-base rounded-b-lg border-none focus:ring-0 focus:outline-none"
+                disabled={isLoading || isUrlLoading}
+                style={{ minHeight: '300px', height: '100%', maxHeight: '100%', boxSizing: 'border-box' }}
               />
-              
-              {fileName && (
-                <div className="text-sm text-muted-foreground">
-                  📄 Loaded: {fileName}
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md mt-4">
+                  {error}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </div>
 
+        {/* Right: Controls and Results */}
+        <div className="flex flex-col gap-6">
+          {/* Copy & Clear Buttons (2 columns) */}
+          <div className="grid grid-cols-2 gap-2 items-start">
+            <div className="flex flex-col">
+              <Button 
+                onClick={copyToClipboard}
+                size="lg"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={isLoading || !text.trim()}
+              >
+                Copy Text
+              </Button>
+              {error && (
+                <div className="text-xs text-destructive bg-destructive/10 p-1 rounded mt-1 text-center">
+                  {error}
+                </div>
+              )}
+            </div>
+            <Button 
+              onClick={clearAll}
+              size="lg"
+              variant="outline"
+              className="w-full"
+              disabled={isLoading}
+            >
+              Clear All
+            </Button>
+          </div>
+
+          {/* Results Section (always visible, compact, 2 columns) */}
+          <Card className="shadow-none border border-muted-foreground/10">
+            <CardContent className="p-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="text-center rounded-lg bg-muted py-4">
+                  <div className="text-2xl font-bold text-primary">{results ? results.wordCount : 0}</div>
+                  <div className="text-sm text-muted-foreground">Words</div>
+                </div>
+                <div className="text-center rounded-lg bg-muted py-4">
+                  <div className="text-2xl font-bold text-primary">{results ? results.charCountExcludingSpaces : 0}</div>
+                  <div className="text-sm text-muted-foreground">Characters (no spaces)</div>
+                </div>
+                <div className="col-span-2 text-center rounded-lg bg-muted py-4 mt-1">
+                  <div className="text-2xl font-bold text-primary">{results ? results.charCountIncludingSpaces : 0}</div>
+                  <div className="text-sm text-muted-foreground">Characters (with spaces)</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* File Upload Section (minimized, compact) */}
+          <Card className="shadow-none border border-muted-foreground/10">
+            <CardContent className="p-2">
+              {fileName ? (
+                <div className="flex items-center justify-between bg-muted rounded px-2 py-1">
+                  <span className="text-sm text-muted-foreground truncate max-w-[140px]">�� {fileName}</span>
+                  <button
+                    type="button"
+                    aria-label="Remove file"
+                    className="ml-2 text-destructive hover:text-destructive/80 text-lg font-bold px-2 py-0.5 rounded focus:outline-none focus:ring-2 focus:ring-destructive"
+                    onClick={() => {
+                      setFileName(null)
+                      setText('')
+                      setResults(null)
+                      setFileError(null)
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <DropZone
+                  onFilesDrop={handleFilesDrop}
+                  disabled={isLoading}
+                  className="p-4 rounded-md"
+                />
+              )}
               {fileError && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                <div className="text-xs text-destructive bg-destructive/10 p-1 rounded mt-1">
                   {fileError}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* URL Input Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Fetch from Webpage</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
+          {/* URL Input Section (minimized, compact) */}
+          <Card className="shadow-none border border-muted-foreground/10">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-1">
                 <Input
                   type="url"
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   disabled={isUrlLoading || isLoading}
-                  className="flex-1"
+                  className="flex-1 h-9 px-2 text-sm"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleUrlSubmit()
@@ -386,101 +480,23 @@ function App() {
                 <Button
                   onClick={handleUrlSubmit}
                   disabled={isUrlLoading || isLoading || !url.trim()}
-                  size="lg"
-                  className="px-8"
+                  size="sm"
+                  className="h-9 px-4 text-sm font-semibold"
                 >
-                  {isUrlLoading ? 'Fetching...' : 'Fetch and Analyze'}
+                  {isUrlLoading ? 'Fetching...' : 'Fetch'}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Note: Some websites may not be accessible due to browser security restrictions (CORS).
-              </p>
-
               {urlError && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                <div className="text-xs text-destructive bg-destructive/10 p-1 rounded mt-1">
                   {urlError}
                 </div>
               )}
             </CardContent>
           </Card>
-
-          {/* Text Input Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Text Input</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Enter or paste your text here, upload a file above, or fetch from a webpage..."
-                value={text}
-                onChange={handleTextChange}
-                className="min-h-[200px] resize-none"
-                disabled={isLoading || isUrlLoading}
-              />
-
-              <div className="flex justify-center gap-4">
-                <Button 
-                  onClick={() => countWordsAndCharacters()}
-                  size="lg"
-                  className="px-8"
-                  disabled={isLoading || !text.trim()}
-                >
-                  Count Words and Characters
-                </Button>
-                <Button 
-                  onClick={copyToClipboard}
-                  size="lg"
-                  variant="outline"
-                  disabled={isLoading || !text.trim()}
-                >
-                  Copy Text
-                </Button>
-                <Button 
-                  onClick={clearAll}
-                  size="lg"
-                  variant="outline"
-                  disabled={isLoading}
-                >
-                  Clear All
-                </Button>
-              </div>
-
-              {error && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                  {error}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Results Section */}
-          {results && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Results</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">{results.wordCount}</div>
-                    <div className="text-sm text-muted-foreground">Words</div>
-                  </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">{results.charCountExcludingSpaces}</div>
-                    <div className="text-sm text-muted-foreground">Characters (no spaces)</div>
-                  </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary">{results.charCountIncludingSpaces}</div>
-                    <div className="text-sm text-muted-foreground">Characters (with spaces)</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
   )
 }
-
+ 
 export default App

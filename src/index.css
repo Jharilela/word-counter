@@ -118,3 +118,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Remove or override the 2rem padding from #root */
+#root {
+  padding: 0 !important;
+}
