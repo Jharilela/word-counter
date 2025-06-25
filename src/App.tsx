@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DropZone } from "@/components/ui/drop-zone"
 
 // Import PDF.js
 import * as pdfjsLib from 'pdfjs-dist'
@@ -25,7 +26,6 @@ function App() {
   const [results, setResults] = useState<CountResults | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
@@ -88,10 +88,7 @@ function App() {
     }
   }
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
+  const processFile = async (file: File) => {
     // Check if file is PDF, DOCX, or TXT
     if (file.type !== 'application/pdf' && 
         file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
@@ -100,9 +97,14 @@ function App() {
       return
     }
 
+    // Clear previous file data before processing new file
+    setText('')
+    setResults(null)
+    setFileName(null)
+    setError(null)
+
     setIsLoading(true)
     setFileName(file.name)
-    setError(null)
 
     try {
       let extractedText = ''
@@ -119,6 +121,7 @@ function App() {
         setError('No text could be extracted from this file. It may be a scanned document or contain only images, which cannot be processed for text. Please try another file.')
         setText('')
         setResults(null)
+        setFileName(null)
         return
       }
 
@@ -130,11 +133,15 @@ function App() {
       setFileName(null)
     } finally {
       setIsLoading(false)
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
     }
+  }
+
+  const handleFilesDrop = async (files: FileList) => {
+    if (files.length === 0) return
+    
+    // Process only the first file for now
+    const file = files[0]
+    await processFile(file)
   }
 
   const countWordsAndCharacters = (textToCount?: string) => {
@@ -175,9 +182,6 @@ function App() {
     setResults(null)
     setFileName(null)
     setError(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
   }
 
   return (
@@ -205,23 +209,12 @@ function App() {
               <CardTitle>Upload File</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  onChange={handleFileUpload}
-                  disabled={isLoading}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  variant="outline"
-                >
-                  {isLoading ? 'Processing...' : 'Browse Files'}
-                </Button>
-              </div>
+              <DropZone
+                onFilesDrop={handleFilesDrop}
+                disabled={isLoading}
+                className="mb-4"
+              />
+              
               {fileName && (
                 <div className="text-sm text-muted-foreground">
                   📄 Loaded: {fileName}
