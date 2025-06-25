@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 // Import PDF.js
 import * as pdfjsLib from 'pdfjs-dist'
+// Import mammoth for .docx processing
+import mammoth from 'mammoth'
 
 // Use the local worker file
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js'
@@ -56,12 +58,24 @@ function App() {
     }
   }
 
+  const extractTextFromDocx = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.extractRawText({ arrayBuffer })
+      return result.value.trim()
+    } catch (error) {
+      console.error('Error extracting text from DOCX:', error)
+      throw new Error('Failed to extract text from DOCX file. Please make sure the file is a valid Word document and try again.')
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (file.type !== 'application/pdf') {
-      setError('Please select a valid PDF file.')
+    // Check if file is PDF or DOCX
+    if (file.type !== 'application/pdf' && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      setError('Please select a valid PDF or DOCX file.')
       return
     }
 
@@ -70,18 +84,26 @@ function App() {
     setError(null)
 
     try {
-      const extractedText = await extractTextFromPDF(file)
+      let extractedText = ''
+      
+      if (file.type === 'application/pdf') {
+        extractedText = await extractTextFromPDF(file)
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        extractedText = await extractTextFromDocx(file)
+      }
+
       if (!extractedText.trim()) {
-        setError('No text could be extracted from this PDF. It may be a scanned or image-based PDF, which cannot be processed for text. Please try another file.')
+        setError('No text could be extracted from this file. It may be a scanned document or contain only images, which cannot be processed for text. Please try another file.')
         setText('')
         setResults(null)
         return
       }
+
       setText(extractedText)
       // Auto-count the extracted text
       countWordsAndCharacters(extractedText)
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred while processing the PDF.')
+      setError(error instanceof Error ? error.message : 'An error occurred while processing the file.')
       setFileName(null)
     } finally {
       setIsLoading(false)
@@ -141,22 +163,30 @@ function App() {
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Word & Character Counter</h1>
           <p className="text-muted-foreground mt-2">
-            Paste text, type manually, or upload a PDF to count words and characters
+            Paste text, type manually, or upload a PDF or DOCX file to count words and characters
           </p>
         </div>
 
         <div className="space-y-4">
+          {error && (
+            <Card className="bg-destructive/10 border-destructive text-destructive">
+              <CardContent className="py-4 text-center font-medium">
+                {error}
+              </CardContent>
+            </Card>
+          )}
+
           {/* File Upload Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Upload PDF</CardTitle>
+              <CardTitle>Upload File</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <Input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.docx"
                   onChange={handleFileUpload}
                   disabled={isLoading}
                   className="flex-1"
@@ -166,7 +196,7 @@ function App() {
                   disabled={isLoading}
                   variant="outline"
                 >
-                  {isLoading ? 'Processing...' : 'Browse PDF'}
+                  {isLoading ? 'Processing...' : 'Browse Files'}
                 </Button>
               </div>
               {fileName && (
@@ -184,7 +214,7 @@ function App() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Enter or paste your text here, or upload a PDF above..."
+                placeholder="Enter or paste your text here, or upload a PDF or DOCX file above..."
                 value={text}
                 onChange={handleTextChange}
                 className="min-h-[200px] resize-none"
@@ -233,14 +263,6 @@ function App() {
                     <div className="text-sm text-muted-foreground">Characters (with spaces)</div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {error && (
-            <Card className="bg-destructive/10 border-destructive text-destructive">
-              <CardContent className="py-4 text-center font-medium">
-                {error}
               </CardContent>
             </Card>
           )}
