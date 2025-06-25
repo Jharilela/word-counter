@@ -6,6 +6,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropZone } from "@/components/ui/drop-zone"
+// Lucide icons
+import { Github, Mail, Globe, FileText, FileCode, FileType2, Disc } from 'lucide-react'
+import { FaFilePdf, FaFileWord } from 'react-icons/fa'
+import { FaGithub, FaDiscord, FaEnvelope, FaGlobe, FaFileCode, FaFileAlt, FaFile } from 'react-icons/fa'
 
 // Import PDF.js
 import * as pdfjsLib from 'pdfjs-dist'
@@ -346,10 +350,10 @@ function App() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <a href="https://github.com/emp0/word-counter" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.339-2.221-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.847-2.337 4.695-4.566 4.944.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.749 0 .267.18.578.688.48C19.138 20.203 22 16.447 22 12.021 22 6.484 17.523 2 12 2z"/></svg></a>
-          <a href="https://discord.gg/emp0" target="_blank" rel="noopener noreferrer" aria-label="Discord" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.1a.074.074 0 0 0-.078.037c-.34.607-.719 1.396-.984 2.013a18.524 18.524 0 0 0-5.59 0 12.51 12.51 0 0 0-.988-2.013.077.077 0 0 0-.078-.037A19.736 19.736 0 0 0 3.684 4.369a.069.069 0 0 0-.032.027C1.605 7.092.322 9.68.076 12.229c-.002.02.006.04.019.055a19.911 19.911 0 0 0 5.993 3.058.077.077 0 0 0 .084-.027c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.104 13.108 13.108 0 0 1-1.872-.893.077.077 0 0 1-.008-.128c.126-.094.252-.192.371-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.245.197.372.291a.077.077 0 0 1-.006.128 12.64 12.64 0 0 1-1.873.893.076.076 0 0 0-.04.105c.36.699.772 1.364 1.225 1.993a.076.076 0 0 0 .084.028 19.888 19.888 0 0 0 6.002-3.058.077.077 0 0 0 .019-.054c-.264-2.549-1.547-5.137-3.608-7.833a.061.061 0 0 0-.03-.028zM8.02 14.331c-1.183 0-2.156-1.085-2.156-2.419 0-1.333.955-2.418 2.156-2.418 1.21 0 2.175 1.095 2.156 2.418 0 1.334-.955 2.419-2.156 2.419zm7.974 0c-1.183 0-2.156-1.085-2.156-2.419 0-1.333.955-2.418 2.156-2.418 1.21 0 2.175 1.095 2.156 2.418 0 1.334-.946 2.419-2.156 2.419z"/></svg></a>
-          <a href="mailto:contact@emp0.com" aria-label="Email" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zM4 20V8.99l7.71 6.93c.18.16.43.16.61 0L20 8.99V20H4z"/></svg></a>
-          <a href="https://emp0.com" target="_blank" rel="noopener noreferrer" aria-label="emp0 website" className="hover:text-primary"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></a>
+          <a href="https://github.com/emp0/word-counter" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-primary"><FaGithub size={20} /></a>
+          <a href="https://discord.gg/emp0" target="_blank" rel="noopener noreferrer" aria-label="Discord" className="hover:text-primary"><FaDiscord size={20} /></a>
+          <a href="mailto:contact@emp0.com" aria-label="Email" className="hover:text-primary"><FaEnvelope size={20} /></a>
+          <a href="https://emp0.com" target="_blank" rel="noopener noreferrer" aria-label="emp0 website" className="hover:text-primary"><FaGlobe size={20} /></a>
         </div>
       </header>
 
@@ -430,7 +434,17 @@ function App() {
             <CardContent className="p-2">
               {fileName ? (
                 <div className="flex items-center justify-between bg-muted rounded px-2 py-1">
-                  <span className="text-sm text-muted-foreground truncate max-w-[140px]">�� {fileName}</span>
+                  <span className="text-sm text-muted-foreground truncate max-w-[140px] flex items-center gap-1" aria-label={fileName}>
+                    {(() => {
+                      const lower = fileName.toLowerCase()
+                      if (lower.endsWith('.pdf')) return <FaFilePdf size={18} className="text-red-500" />
+                      if (lower.endsWith('.docx') || lower.endsWith('.doc')) return <FaFileWord size={18} className="text-blue-500" />
+                      if (lower.endsWith('.md')) return <FaFileCode size={18} className="text-green-500" />
+                      if (lower.endsWith('.txt')) return <FaFileAlt size={18} className="text-gray-500" />
+                      if (lower.endsWith('.srt')) return <FaFileAlt size={18} className="text-purple-500" />
+                      return <FaFile size={18} className="text-gray-400" />
+                    })()} {fileName}
+                  </span>
                   <button
                     type="button"
                     aria-label="Remove file"
