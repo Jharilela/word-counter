@@ -1,69 +1,111 @@
-# React + TypeScript + Vite
+# Word & Character Counter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, privacy-friendly, and free online tool to count words and characters in text, PDF, DOCX, TXT, SRT, Markdown, and even website content. Built with React, TypeScript, Vite, and Tailwind, with PWA support and Google Analytics integration.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
+- **Instant word & character counting** (realtime as you type, upload, or fetch)
+- **Drag & drop or click to upload**: PDF, DOCX, TXT, SRT, Markdown (.md)
+- **Paste or type text** directly
+- **Fetch and analyze webpage text** by URL
+- **Copy results** to clipboard
+- **Clear all** with one click
+- **Beautiful, responsive UI** (ShadeCN, Tailwind)
+- **PWA**: Installable, works offline
+- **Google Analytics** (optional, privacy-respecting)
 
-## Expanding the ESLint configuration
+## 📝 Planned Features
+- **OCR for PDF:** Extract text from scanned PDFs using Optical Character Recognition (OCR)
+- **Puppeteer Scraper for Websites:** Use Puppeteer for more robust website text extraction (bypass CORS, handle dynamic content)
+- **Repeated Words Analysis:** Show most repeated words and their counts for deeper text analysis
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 📂 Supported File Types
+- PDF (.pdf)
+- Word (.docx, .doc)
+- Text (.txt)
+- Markdown (.md)
+- SubRip Subtitle (.srt)
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🚀 Getting Started
+
+1. **Clone the repo:**
+   ```sh
+   git clone https://github.com/Jharilela/word-counter.git
+   cd word-counter
+   ```
+2. **Install dependencies:**
+   ```sh
+   pnpm install
+   # or
+   npm install
+   ```
+3. **Run the app locally:**
+   ```sh
+   pnpm dev
+   # or
+   npm run dev
+   ```
+4. **Build for production:**
+   ```sh
+   pnpm build
+   # or
+   npm run build
+   ```
+
+---
+
+## ⚙️ Environment Variables
+
+Copy `.env.example` to `.env` and set your Google Analytics key (optional):
+
+```
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+If not set, analytics is disabled and a warning is logged in the console.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📱 PWA & SEO
+- **PWA:** Installable on desktop/mobile, works offline, manifest and icons included
+- **SEO:**
+  - Meta tags, Open Graph, Twitter Card, and manifest are set up in `index.html`
+  - Keywords: word counter, character counter, PDF, DOCX, TXT, SRT, Markdown, website, online, free, PWA, privacy, emp0
+
+---
+
+## 🖼️ Logos & Icons
+- Place your logo and icons in the `public/` directory (see `public/logo.png`, `public/logo-192x192.png`, etc.)
+- Favicon and PWA icons are referenced in `index.html` and manifest
+
+---
+
+## 🛠️ Tech Stack
+- [React](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Vite](https://vitejs.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [react-icons](https://react-icons.github.io/react-icons/)
+- [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
+- [shadecn/ui](https://ui.shadcn.com/)
+
+---
+
+## 👤 Credits & Socials
+- **Developer:** [emp0](https://emp0.com)
+- **GitHub:** [Jharilela/word-counter](https://github.com/Jharilela/word-counter)
+- **Discord:** [@jym.god](https://discord.com/users/jym.god)
+- **Email:** tools@emp0.com
+- **Website:** [emp0.com](https://emp0.com)
+
+---
+
+## 📄 License
+MIT
+
+

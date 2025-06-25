@@ -1,13 +1,13 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { DropZone } from "@/components/ui/drop-zone"
+import { PWAInstall } from "@/components/PWAInstall"
 // Lucide icons
-import { Github, Mail, Globe, FileText, FileCode, FileType2, Disc } from 'lucide-react'
 import { FaFilePdf, FaFileWord } from 'react-icons/fa'
 import { FaGithub, FaDiscord, FaEnvelope, FaGlobe, FaFileCode, FaFileAlt, FaFile } from 'react-icons/fa'
 
@@ -350,9 +350,9 @@ function App() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <a href="https://github.com/emp0/word-counter" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-primary"><FaGithub size={20} /></a>
-          <a href="https://discord.gg/emp0" target="_blank" rel="noopener noreferrer" aria-label="Discord" className="hover:text-primary"><FaDiscord size={20} /></a>
-          <a href="mailto:contact@emp0.com" aria-label="Email" className="hover:text-primary"><FaEnvelope size={20} /></a>
+          <a href="https://github.com/Jharilela/word-counter" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-primary"><FaGithub size={20} /></a>
+          <a href="https://discord.com/users/jym.god" target="_blank" rel="noopener noreferrer" aria-label="Discord (@jym.god)" className="hover:text-primary"><FaDiscord size={20} /></a>
+          <a href="mailto:tools@emp0.com" aria-label="Email" className="hover:text-primary"><FaEnvelope size={20} /></a>
           <a href="https://emp0.com" target="_blank" rel="noopener noreferrer" aria-label="emp0 website" className="hover:text-primary"><FaGlobe size={20} /></a>
         </div>
       </header>
@@ -509,6 +509,9 @@ function App() {
           </Card>
         </div>
       </div>
+      
+      {/* PWA Install Button */}
+      <PWAInstall />
     </div>
   )
 }
