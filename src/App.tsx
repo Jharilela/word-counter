@@ -91,13 +91,15 @@ function App() {
   }
 
   const processFile = async (file: File) => {
-    // Check if file is PDF, DOCX, TXT, or MD
+    // Check if file is PDF, DOCX, TXT, MD, or SRT
     if (file.type !== 'application/pdf' && 
         file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
         file.type !== 'text/plain' &&
         file.type !== 'text/markdown' &&
-        !file.name.toLowerCase().endsWith('.md')) {
-      setFileError('Please select a valid PDF, DOCX, TXT, or MD file.')
+        file.type !== 'application/x-subrip' &&
+        !file.name.toLowerCase().endsWith('.md') &&
+        !file.name.toLowerCase().endsWith('.srt')) {
+      setFileError('Please select a valid PDF, DOCX, TXT, MD, or SRT file.')
       return
     }
 
@@ -118,7 +120,11 @@ function App() {
         extractedText = await extractTextFromPDF(file)
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         extractedText = await extractTextFromDocx(file)
-      } else if (file.type === 'text/plain' || file.type === 'text/markdown' || file.name.toLowerCase().endsWith('.md')) {
+      } else if (file.type === 'text/plain' || 
+                 file.type === 'text/markdown' || 
+                 file.type === 'application/x-subrip' ||
+                 file.name.toLowerCase().endsWith('.md') ||
+                 file.name.toLowerCase().endsWith('.srt')) {
         extractedText = await extractTextFromTxt(file)
       }
 
@@ -326,7 +332,7 @@ function App() {
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Word & Character Counter</h1>
           <p className="text-muted-foreground mt-2">
-            Paste text, type manually, upload a PDF, DOCX, TXT, or MD file, or fetch from a webpage to count words and characters
+            Paste text, type manually, upload a PDF, DOCX, TXT, MD, or SRT file, or fetch from a webpage to count words and characters
           </p>
         </div>
 

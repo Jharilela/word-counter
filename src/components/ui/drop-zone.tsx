@@ -8,7 +8,7 @@ export interface DropZoneProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const DropZone = React.forwardRef<HTMLDivElement, DropZoneProps>(
-  ({ className, onFilesDrop, acceptedFileTypes = ['.pdf', '.docx', '.txt', '.md'], disabled = false, ...props }, ref) => {
+  ({ className, onFilesDrop, acceptedFileTypes = ['.pdf', '.docx', '.txt', '.md', '.srt'], disabled = false, ...props }, ref) => {
     const [isDragOver, setIsDragOver] = React.useState(false)
     const [isDragValid, setIsDragValid] = React.useState(false)
     const dragCounter = React.useRef(0)
