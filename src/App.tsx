@@ -91,11 +91,13 @@ function App() {
   }
 
   const processFile = async (file: File) => {
-    // Check if file is PDF, DOCX, or TXT
+    // Check if file is PDF, DOCX, TXT, or MD
     if (file.type !== 'application/pdf' && 
         file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
-        file.type !== 'text/plain') {
-      setFileError('Please select a valid PDF, DOCX, or TXT file.')
+        file.type !== 'text/plain' &&
+        file.type !== 'text/markdown' &&
+        !file.name.toLowerCase().endsWith('.md')) {
+      setFileError('Please select a valid PDF, DOCX, TXT, or MD file.')
       return
     }
 
@@ -116,7 +118,7 @@ function App() {
         extractedText = await extractTextFromPDF(file)
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         extractedText = await extractTextFromDocx(file)
-      } else if (file.type === 'text/plain') {
+      } else if (file.type === 'text/plain' || file.type === 'text/markdown' || file.name.toLowerCase().endsWith('.md')) {
         extractedText = await extractTextFromTxt(file)
       }
 
@@ -324,7 +326,7 @@ function App() {
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Word & Character Counter</h1>
           <p className="text-muted-foreground mt-2">
-            Paste text, type manually, or upload a PDF, DOCX, or TXT file to count words and characters
+            Paste text, type manually, upload a PDF, DOCX, TXT, or MD file, or fetch from a webpage to count words and characters
           </p>
         </div>
 
