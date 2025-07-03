@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { DropZone } from "@/components/ui/drop-zone"
 import { PWAInstall } from "@/components/PWAInstall"
+import { GoogleAnalyticsDebug } from "@/components/GoogleAnalyticsDebug"
+import { trackEvent, trackPageView } from "@/lib/utils"
 // Lucide icons
 import { FaFilePdf, FaFileWord } from 'react-icons/fa'
 import { FaGithub, FaDiscord, FaEnvelope, FaGlobe, FaFileCode, FaFileAlt, FaFile } from 'react-icons/fa'
@@ -95,6 +97,9 @@ function App() {
   }
 
   const processFile = async (file: File) => {
+    // Track file upload event
+    trackEvent('file_upload', 'file_processing', file.type || 'unknown');
+    
     // Check if file is PDF, DOCX, TXT, MD, or SRT
     if (file.type !== 'application/pdf' && 
         file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
@@ -104,6 +109,7 @@ function App() {
         !file.name.toLowerCase().endsWith('.md') &&
         !file.name.toLowerCase().endsWith('.srt')) {
       setFileError('Please select a valid PDF, DOCX, TXT, MD, or SRT file.')
+      trackEvent('file_upload_error', 'file_processing', 'invalid_file_type');
       return
     }
 
@@ -198,8 +204,11 @@ function App() {
   const copyToClipboard = async () => {
     if (!text.trim()) {
       setError('No text to copy.')
+      trackEvent('copy_error', 'user_action', 'no_text_to_copy');
       return
     }
+    
+    trackEvent('copy_to_clipboard', 'user_action', 'text_copied');
 
     try {
       await navigator.clipboard.writeText(text)
@@ -321,6 +330,7 @@ function App() {
   }
 
   const clearAll = () => {
+    trackEvent('clear_all', 'user_action', 'content_cleared');
     setText('')
     setResults(null)
     setFileName(null)
@@ -329,6 +339,11 @@ function App() {
     setUrlError(null)
     setUrl('')
   }
+
+  // Track page view on component mount
+  useEffect(() => {
+    trackPageView();
+  }, []);
 
   // Realtime counting: useEffect on text
   useEffect(() => {
@@ -341,6 +356,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background p-4">
+      <GoogleAnalyticsDebug />
       {/* Header */}
       <header className="w-full flex items-center justify-between border-b border-muted-foreground/10 px-2 py-2 mb-6">
         <div className="flex flex-col gap-0.5 text-left">
