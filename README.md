@@ -16,9 +16,11 @@ A modern, privacy-friendly, and free online tool to count words and characters i
 - **Google Analytics** (optional, privacy-respecting)
 
 ## 📝 Planned Features
-- **OCR for PDF:** Extract text from scanned PDFs using Optical Character Recognition (OCR)
-- **Puppeteer Scraper for Websites:** Use Puppeteer for more robust website text extraction (bypass CORS, handle dynamic content)
-- **Repeated Words Analysis:** Show most repeated words and their counts for deeper text analysis
+[ ] **OCR for PDF:** Extract text from scanned PDFs using Optical Character Recognition (OCR)
+
+[ ] **Puppeteer Scraper for Websites:** Use Puppeteer for more robust website text extraction (bypass CORS, handle dynamic content)
+
+[ ] **Repeated Words Analysis:** Show most repeated words and their counts for deeper text analysis
 
 ---
 
