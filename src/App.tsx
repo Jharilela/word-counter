@@ -17,14 +17,30 @@ import { FaGithub, FaDiscord, FaEnvelope, FaGlobe, FaFileCode, FaFileAlt, FaFile
 import * as pdfjsLib from 'pdfjs-dist'
 // Import mammoth for .docx processing
 import mammoth from 'mammoth'
+// Import Tesseract.js for OCR
+import { createWorker } from 'tesseract.js'
 
 // Use the local worker file
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js'
+
+interface WordFrequency {
+  word: string;
+  count: number;
+  percentage: number;
+}
+
+interface RepeatedWordsAnalysis {
+  topWords: WordFrequency[];
+  totalUniqueWords: number;
+  mostRepeatedWord: WordFrequency | null;
+  stopWordsFiltered: boolean;
+}
 
 interface CountResults {
   wordCount: number;
   charCountExcludingSpaces: number;
   charCountIncludingSpaces: number;
+  repeatedWordsAnalysis?: RepeatedWordsAnalysis;
 }
  
 function App() {
@@ -35,6 +51,141 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [urlError, setUrlError] = useState<string | null>(null)
+  const [showRepeatedWords, setShowRepeatedWords] = useState(false)
+  const [filterStopWords, setFilterStopWords] = useState(true)
+  const [ocrProgress, setOcrProgress] = useState<number>(0)
+  const [isOcrProcessing, setIsOcrProcessing] = useState(false)
+  const [ocrLanguage, setOcrLanguage] = useState('eng')
+
+  const analyzeRepeatedWords = (text: string, filterStopWords = true): RepeatedWordsAnalysis => {
+    const stopWords = new Set([
+      'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 
+      'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 
+      'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'a', 
+      'an', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 
+      'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 
+      'their', 'myself', 'yourself', 'himself', 'herself', 'itself', 'ourselves', 
+      'yourselves', 'themselves', 'what', 'which', 'who', 'when', 'where', 'why', 
+      'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 
+      'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very'
+    ]);
+    
+    if (!text.trim()) {
+      return {
+        topWords: [],
+        totalUniqueWords: 0,
+        mostRepeatedWord: null,
+        stopWordsFiltered: filterStopWords
+      };
+    }
+
+    const words = text.toLowerCase()
+      .replace(/[^\w\s]/g, '') // Remove punctuation
+      .split(/\s+/)
+      .filter(word => word.length > 1); // Filter out single characters
+    
+    const filteredWords = filterStopWords 
+      ? words.filter(word => !stopWords.has(word))
+      : words;
+    
+    const frequency = new Map<string, number>();
+    
+    filteredWords.forEach(word => {
+      frequency.set(word, (frequency.get(word) || 0) + 1);
+    });
+    
+    const totalWords = filteredWords.length;
+    const wordFrequencies: WordFrequency[] = Array.from(frequency.entries())
+      .map(([word, count]) => ({
+        word,
+        count,
+        percentage: totalWords > 0 ? (count / totalWords) * 100 : 0
+      }))
+      .sort((a, b) => b.count - a.count);
+    
+    return {
+      topWords: wordFrequencies.slice(0, 15), // Top 15 words
+      totalUniqueWords: frequency.size,
+      mostRepeatedWord: wordFrequencies[0] || null,
+      stopWordsFiltered: filterStopWords
+    };
+  };
+
+  const convertPDFPageToImage = async (pdf: any, pageNum: number): Promise<HTMLCanvasElement> => {
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better OCR accuracy
+    
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    
+    if (!context) {
+      throw new Error('Could not get canvas context');
+    }
+    
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport
+    };
+    
+    await page.render(renderContext).promise;
+    
+    return canvas;
+  };
+
+  const extractTextWithOCR = async (file: File): Promise<string> => {
+    setIsOcrProcessing(true);
+    setOcrProgress(0);
+    
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true
+      }).promise;
+
+      const worker = await createWorker(ocrLanguage, 1, {
+        logger: (m: any) => {
+          if (m.status === 'recognizing text') {
+            setOcrProgress(m.progress * 100);
+          }
+        }
+      });
+
+      let fullText = '';
+      const totalPages = pdf.numPages;
+
+      for (let i = 1; i <= totalPages; i++) {
+        try {
+          setOcrProgress((i - 1) / totalPages * 80); // Reserve 20% for final processing
+          
+          const canvas = await convertPDFPageToImage(pdf, i);
+          const { data: { text } } = await worker.recognize(canvas);
+          
+          if (text.trim()) {
+            fullText += text.trim() + '\n\n';
+          }
+        } catch (pageError) {
+          console.error(`Error processing page ${i}:`, pageError);
+          // Continue with other pages even if one fails
+        }
+      }
+
+      setOcrProgress(100);
+      await worker.terminate();
+      
+      return fullText.trim();
+    } catch (error) {
+      console.error('OCR processing failed:', error);
+      throw new Error(`OCR processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsOcrProcessing(false);
+      setOcrProgress(0);
+    }
+  };
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
@@ -59,10 +210,26 @@ function App() {
         fullText += pageText + '\n'
       }
 
-      return fullText.trim()
+      const extractedText = fullText.trim()
+      
+      // If no text was extracted or very little text (likely a scanned PDF), try OCR
+      if (!extractedText || extractedText.length < 50) {
+        console.log('Little to no text found via standard extraction, attempting OCR...');
+        return await extractTextWithOCR(file);
+      }
+
+      return extractedText
     } catch (error) {
       console.error('Error extracting text from PDF:', error)
-      throw new Error('Failed to extract text from PDF. Please make sure the file is a valid PDF and try again.')
+      
+      // If regular extraction failed, try OCR as fallback
+      try {
+        console.log('Standard PDF extraction failed, trying OCR fallback...');
+        return await extractTextWithOCR(file);
+      } catch (ocrError) {
+        console.error('OCR fallback also failed:', ocrError);
+        throw new Error('Failed to extract text from PDF. This may be a scanned document. Please try a different file or check if the PDF contains readable text.');
+      }
     }
   }
 
@@ -182,10 +349,14 @@ function App() {
     // Count characters including spaces
     const charCountIncludingSpaces = textContent.length
 
+    // Analyze repeated words if enabled
+    const repeatedWordsAnalysis = showRepeatedWords ? analyzeRepeatedWords(textContent, filterStopWords) : undefined
+
     setResults({
       wordCount,
       charCountExcludingSpaces,
-      charCountIncludingSpaces
+      charCountIncludingSpaces,
+      repeatedWordsAnalysis
     })
   }
 
@@ -225,58 +396,121 @@ function App() {
 
   const extractTextFromWebpage = async (url: string) => {
     try {
-      const response = await fetch(url)
+      // Try multiple CORS proxy services for better reliability
+      const proxyServices = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://cors-anywhere.herokuapp.com/${url}`
+      ];
+
+      let lastError: Error | null = null;
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      // Try direct fetch first for sites that don't have CORS restrictions
+      try {
+        const directResponse = await fetch(url);
+        if (directResponse.ok) {
+          const html = await directResponse.text();
+          return parseHTML(html);
+        }
+      } catch (directError) {
+        console.log('Direct fetch failed, trying proxy services:', directError);
+      }
+
+      // Try proxy services one by one
+      for (let i = 0; i < proxyServices.length; i++) {
+        try {
+          const proxyUrl = proxyServices[i];
+          const response = await fetch(proxyUrl);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          let html: string;
+          
+          // Handle different proxy response formats
+          if (proxyUrl.includes('allorigins.win')) {
+            const data = await response.json();
+            if (data.status?.http_code && data.status.http_code !== 200) {
+              throw new Error(`Target site returned ${data.status.http_code}`);
+            }
+            html = data.contents;
+          } else if (proxyUrl.includes('corsproxy.io')) {
+            html = await response.text();
+          } else {
+            html = await response.text();
+          }
+          
+          return parseHTML(html);
+          
+        } catch (error) {
+          console.error(`Proxy service ${i + 1} failed:`, error);
+          lastError = error instanceof Error ? error : new Error('Unknown error');
+          
+          // If this was the last proxy service, don't continue
+          if (i === proxyServices.length - 1) {
+            break;
+          }
+        }
       }
       
-      const html = await response.text()
+      // If all proxy services failed, throw the last error
+      throw lastError || new Error('All proxy services failed');
       
-      // Parse HTML and extract text from body
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(html, 'text/html')
-      
-      // Remove script, style, head, and other non-content elements
-      const elementsToRemove = doc.querySelectorAll('script, style, head, nav, footer, header, aside, noscript, iframe, img, video, audio, canvas, svg, meta, link, title')
-      elementsToRemove.forEach(el => el.remove())
-      
-      // Extract text from body
-      const body = doc.body
-      if (!body) {
-        throw new Error('No body content found on the webpage.')
-      }
-      
-      // Get text content and clean it up
-      let text = body.textContent || body.innerText || ''
-      
-      // Clean up the text: remove extra whitespace, normalize line breaks
-      text = text
-        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-        .replace(/\n\s*\n/g, '\n') // Replace multiple line breaks with single
-        .trim()
-      
-      return text
     } catch (error) {
-      console.error('Error fetching webpage:', error)
+      console.error('Error fetching webpage:', error);
       
-      // Check for CORS or network errors
-      if (error instanceof TypeError) {
-        if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
-          throw new Error('Cannot access this site due to browser security restrictions (CORS). Try a different website or use the file upload option.')
-        }
-      }
-      
-      // Check for other network errors
+      // Provide helpful error messages
       if (error instanceof Error) {
-        if (error.message.includes('ERR_FAILED') || error.message.includes('ERR_NETWORK')) {
-          throw new Error('Network error: Cannot access this website. It may be blocked by browser security restrictions.')
+        if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          throw new Error('Unable to access the website. This could be due to:\n• The website blocking automated requests\n• Network connectivity issues\n• The website being temporarily unavailable\n\nTry using the file upload option instead.');
         }
+        
+        if (error.message.includes('CORS') || error.message.includes('cors')) {
+          throw new Error('Website access blocked by security restrictions. Try copying and pasting the text manually or use the file upload option.');
+        }
+        
+        if (error.message.includes('404') || error.message.includes('500')) {
+          throw new Error('The webpage could not be found or the server returned an error. Please check the URL and try again.');
+        }
+        
+        throw new Error(`Unable to fetch webpage: ${error.message}`);
       }
       
-      throw new Error(`Failed to fetch webpage: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error('An unexpected error occurred while fetching the webpage.');
     }
-  }
+  };
+
+  const parseHTML = (html: string): string => {
+    // Parse HTML and extract text from body
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Remove script, style, head, and other non-content elements
+    const elementsToRemove = doc.querySelectorAll('script, style, head, nav, footer, header, aside, noscript, iframe, img, video, audio, canvas, svg, meta, link, title');
+    elementsToRemove.forEach(el => el.remove());
+    
+    // Extract text from body
+    const body = doc.body;
+    if (!body) {
+      throw new Error('No body content found on the webpage.');
+    }
+    
+    // Get text content and clean it up
+    let text = body.textContent || body.innerText || '';
+    
+    // Clean up the text: remove extra whitespace, normalize line breaks
+    text = text
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/\n\s*\n/g, '\n') // Replace multiple line breaks with single
+      .trim();
+    
+    if (!text) {
+      throw new Error('No readable text content found on the webpage.');
+    }
+    
+    return text;
+  };
 
   const handleUrlSubmit = async () => {
     if (!url.trim()) {
@@ -338,6 +572,9 @@ function App() {
     setFileError(null)
     setUrlError(null)
     setUrl('')
+    setShowRepeatedWords(false)
+    setIsOcrProcessing(false)
+    setOcrProgress(0)
   }
 
   // Track page view on component mount
@@ -442,45 +679,154 @@ function App() {
                   <div className="text-sm text-muted-foreground">Characters (with spaces)</div>
                 </div>
               </div>
+              
+              {/* Repeated Words Analysis Toggle */}
+              <div className="mt-3 pt-3 border-t border-muted-foreground/10">
+                <Button
+                  onClick={() => setShowRepeatedWords(!showRepeatedWords)}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                  disabled={!text.trim()}
+                >
+                  {showRepeatedWords ? 'Hide' : 'Show'} Word Analysis
+                </Button>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Repeated Words Analysis Section */}
+          {showRepeatedWords && results?.repeatedWordsAnalysis && (
+            <Card className="shadow-none border border-muted-foreground/10">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold">Word Frequency Analysis</h3>
+                  <Button
+                    onClick={() => setFilterStopWords(!filterStopWords)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-6 px-2"
+                  >
+                    {filterStopWords ? 'Include' : 'Filter'} Common Words
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="text-center rounded-lg bg-muted py-2">
+                    <div className="text-lg font-bold text-primary">{results.repeatedWordsAnalysis.totalUniqueWords}</div>
+                    <div className="text-xs text-muted-foreground">Unique Words</div>
+                  </div>
+                  <div className="text-center rounded-lg bg-muted py-2">
+                    <div className="text-lg font-bold text-primary">
+                      {results.repeatedWordsAnalysis.mostRepeatedWord?.count || 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Most Frequent</div>
+                  </div>
+                </div>
+
+                {results.repeatedWordsAnalysis.topWords.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground mb-2">Top Words:</div>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {results.repeatedWordsAnalysis.topWords.slice(0, 10).map((wordFreq, index) => (
+                        <div key={index} className="flex items-center justify-between bg-muted/50 rounded px-2 py-1">
+                          <span className="text-xs font-medium truncate max-w-20">{wordFreq.word}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">{wordFreq.count}</span>
+                            <div className="w-12 h-1 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary rounded-full" 
+                                style={{ width: `${Math.min(wordFreq.percentage * 2, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* File Upload Section (minimized, compact) */}
           <Card className="shadow-none border border-muted-foreground/10">
             <CardContent className="p-2">
               {fileName ? (
-                <div className="flex items-center justify-between bg-muted rounded px-2 py-1">
-                  <span className="text-sm text-muted-foreground truncate max-w-[140px] flex items-center gap-1" aria-label={fileName}>
-                    {(() => {
-                      const lower = fileName.toLowerCase()
-                      if (lower.endsWith('.pdf')) return <FaFilePdf size={18} className="text-red-500" />
-                      if (lower.endsWith('.docx') || lower.endsWith('.doc')) return <FaFileWord size={18} className="text-blue-500" />
-                      if (lower.endsWith('.md')) return <FaFileCode size={18} className="text-green-500" />
-                      if (lower.endsWith('.txt')) return <FaFileAlt size={18} className="text-gray-500" />
-                      if (lower.endsWith('.srt')) return <FaFileAlt size={18} className="text-purple-500" />
-                      return <FaFile size={18} className="text-gray-400" />
-                    })()} {fileName}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Remove file"
-                    className="ml-2 text-destructive hover:text-destructive/80 text-lg font-bold px-2 py-0.5 rounded focus:outline-none focus:ring-2 focus:ring-destructive"
-                    onClick={() => {
-                      setFileName(null)
-                      setText('')
-                      setResults(null)
-                      setFileError(null)
-                    }}
-                  >
-                    ×
-                  </button>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-muted rounded px-2 py-1">
+                    <span className="text-sm text-muted-foreground truncate max-w-[140px] flex items-center gap-1" aria-label={fileName}>
+                      {(() => {
+                        const lower = fileName.toLowerCase()
+                        if (lower.endsWith('.pdf')) return <FaFilePdf size={18} className="text-red-500" />
+                        if (lower.endsWith('.docx') || lower.endsWith('.doc')) return <FaFileWord size={18} className="text-blue-500" />
+                        if (lower.endsWith('.md')) return <FaFileCode size={18} className="text-green-500" />
+                        if (lower.endsWith('.txt')) return <FaFileAlt size={18} className="text-gray-500" />
+                        if (lower.endsWith('.srt')) return <FaFileAlt size={18} className="text-purple-500" />
+                        return <FaFile size={18} className="text-gray-400" />
+                      })()} {fileName}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Remove file"
+                      className="ml-2 text-destructive hover:text-destructive/80 text-lg font-bold px-2 py-0.5 rounded focus:outline-none focus:ring-2 focus:ring-destructive"
+                      onClick={() => {
+                        setFileName(null)
+                        setText('')
+                        setResults(null)
+                        setFileError(null)
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  {/* OCR Progress */}
+                  {isOcrProcessing && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">OCR Processing...</span>
+                        <span className="text-xs text-muted-foreground">{Math.round(ocrProgress)}%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-1">
+                        <div 
+                          className="bg-primary h-1 rounded-full transition-all duration-300" 
+                          style={{ width: `${ocrProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <DropZone
-                  onFilesDrop={handleFilesDrop}
-                  disabled={isLoading}
-                  className="p-4 rounded-md"
-                />
+                <div className="space-y-2">
+                  <DropZone
+                    onFilesDrop={handleFilesDrop}
+                    disabled={isLoading || isOcrProcessing}
+                    className="p-4 rounded-md"
+                  />
+                  
+                  {/* OCR Language Selection */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground">OCR Language:</label>
+                    <select
+                      value={ocrLanguage}
+                      onChange={(e) => setOcrLanguage(e.target.value)}
+                      className="text-xs bg-background border border-input rounded px-2 py-1 flex-1"
+                      disabled={isLoading || isOcrProcessing}
+                    >
+                      <option value="eng">English</option>
+                      <option value="spa">Spanish</option>
+                      <option value="fra">French</option>
+                      <option value="deu">German</option>
+                      <option value="ita">Italian</option>
+                      <option value="por">Portuguese</option>
+                      <option value="rus">Russian</option>
+                      <option value="chi_sim">Chinese (Simplified)</option>
+                      <option value="jpn">Japanese</option>
+                      <option value="kor">Korean</option>
+                    </select>
+                  </div>
+                </div>
               )}
               {fileError && (
                 <div className="text-xs text-destructive bg-destructive/10 p-1 rounded mt-1">
