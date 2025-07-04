@@ -732,21 +732,21 @@ function App() {
             </Button>
           </div>
 
-          {/* Results Section (always visible, compact, 2 columns) */}
+          {/* Results Section (always visible, compact, 3 columns) */}
           <Card className="shadow-none border border-muted-foreground/10">
             <CardContent className="p-3">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="text-center rounded-lg bg-muted py-4">
                   <div className="text-2xl font-bold text-primary">{results ? results.wordCount : 0}</div>
                   <div className="text-sm text-muted-foreground">Words</div>
                 </div>
                 <div className="text-center rounded-lg bg-muted py-4">
                   <div className="text-2xl font-bold text-primary">{results ? results.charCountExcludingSpaces : 0}</div>
-                  <div className="text-sm text-muted-foreground">Characters (no spaces)</div>
+                  <div className="text-sm text-muted-foreground whitespace-pre-line">Characters{'\n'}(no spaces)</div>
                 </div>
-                <div className="col-span-2 text-center rounded-lg bg-muted py-4 mt-1">
+                <div className="text-center rounded-lg bg-muted py-4">
                   <div className="text-2xl font-bold text-primary">{results ? results.charCountIncludingSpaces : 0}</div>
-                  <div className="text-sm text-muted-foreground">Characters (with spaces)</div>
+                  <div className="text-sm text-muted-foreground whitespace-pre-line">Characters{'\n'}(with spaces)</div>
                 </div>
               </div>
               
