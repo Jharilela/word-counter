@@ -7,20 +7,25 @@ A modern, privacy-friendly, and free online tool to count words and characters i
 ## ✨ Features
 - **Instant word & character counting** (realtime as you type, upload, or fetch)
 - **Drag & drop or click to upload**: PDF, DOCX, TXT, SRT, Markdown (.md)
+- **OCR for scanned PDFs**: Extract text from image-based PDFs using Tesseract.js with multiple language support
 - **Paste or type text** directly
-- **Fetch and analyze webpage text** by URL
+- **Fetch and analyze webpage text** by URL with CORS proxy fallback
+- **Repeated words analysis**: Show most frequent words with customizable stop-word filtering
 - **Copy results** to clipboard
 - **Clear all** with one click
 - **Beautiful, responsive UI** (ShadeCN, Tailwind)
 - **PWA**: Installable, works offline
 - **Google Analytics** (optional, privacy-respecting)
 
-## 📝 Planned Features
-[ ] **OCR for PDF:** Extract text from scanned PDFs using Optical Character Recognition (OCR)
+## 📝 Recently Added Features
+[✅] **OCR for PDF:** Extract text from scanned PDFs using Optical Character Recognition (OCR) with Tesseract.js
 
-[ ] **Puppeteer Scraper for Websites:** Use Puppeteer for more robust website text extraction (bypass CORS, handle dynamic content)
+[✅] **CORS Proxy for Websites:** Bypass CORS restrictions with multiple proxy services for robust website text extraction
 
-[ ] **Repeated Words Analysis:** Show most repeated words and their counts for deeper text analysis
+[✅] **Repeated Words Analysis:** Show most repeated words and their counts for deeper text analysis with stop-word filtering
+
+## 📝 Future Features
+[ ] **Puppeteer Scraper for Websites:** Use Puppeteer for even more robust website text extraction (handle complex dynamic content)
 
 ---
 
