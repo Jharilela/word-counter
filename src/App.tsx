@@ -51,7 +51,6 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [urlError, setUrlError] = useState<string | null>(null)
-  const [showRepeatedWords, setShowRepeatedWords] = useState(false)
   const [filterStopWords, setFilterStopWords] = useState(true)
   const [ocrProgress, setOcrProgress] = useState<number>(0)
   const [isOcrProcessing, setIsOcrProcessing] = useState(false)
@@ -349,8 +348,8 @@ function App() {
     // Count characters including spaces
     const charCountIncludingSpaces = textContent.length
 
-    // Analyze repeated words if enabled
-    const repeatedWordsAnalysis = showRepeatedWords ? analyzeRepeatedWords(textContent, filterStopWords) : undefined
+    // Always analyze repeated words
+    const repeatedWordsAnalysis = analyzeRepeatedWords(textContent, filterStopWords)
 
     setResults({
       wordCount,
@@ -572,7 +571,6 @@ function App() {
     setFileError(null)
     setUrlError(null)
     setUrl('')
-    setShowRepeatedWords(false)
     setIsOcrProcessing(false)
     setOcrProgress(0)
   }
@@ -680,23 +678,12 @@ function App() {
                 </div>
               </div>
               
-              {/* Repeated Words Analysis Toggle */}
-              <div className="mt-3 pt-3 border-t border-muted-foreground/10">
-                <Button
-                  onClick={() => setShowRepeatedWords(!showRepeatedWords)}
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                  disabled={!text.trim()}
-                >
-                  {showRepeatedWords ? 'Hide' : 'Show'} Word Analysis
-                </Button>
-              </div>
+
             </CardContent>
           </Card>
 
           {/* Repeated Words Analysis Section */}
-          {showRepeatedWords && results?.repeatedWordsAnalysis && (
+          {results?.repeatedWordsAnalysis && (
             <Card className="shadow-none border border-muted-foreground/10">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-3">
@@ -726,9 +713,9 @@ function App() {
 
                 {results.repeatedWordsAnalysis.topWords.length > 0 && (
                   <div className="space-y-1">
-                    <div className="text-xs font-medium text-muted-foreground mb-2">Top Words:</div>
+                    <div className="text-xs font-medium text-muted-foreground mb-2">Top 5 Words:</div>
                     <div className="max-h-40 overflow-y-auto space-y-1">
-                      {results.repeatedWordsAnalysis.topWords.slice(0, 10).map((wordFreq, index) => (
+                      {results.repeatedWordsAnalysis.topWords.slice(0, 5).map((wordFreq, index) => (
                         <div key={index} className="flex items-center justify-between bg-muted/50 rounded px-2 py-1">
                           <span className="text-xs font-medium truncate max-w-20">{wordFreq.word}</span>
                           <div className="flex items-center gap-1">
