@@ -395,22 +395,45 @@ function App() {
 
   const extractTextFromWebpage = async (url: string) => {
     try {
-      // Updated list of more reliable CORS proxy services
+      // First, try the serverless function (most reliable for Vercel)
+      try {
+        console.log('Attempting serverless function fetch...');
+        const serverlessResponse = await fetch(`/api/fetch-content?url=${encodeURIComponent(url)}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (serverlessResponse.ok) {
+          const data = await serverlessResponse.json();
+          if (data.content) {
+            console.log('Serverless function successful, parsing content...');
+            return parseHTML(data.content);
+          }
+        } else {
+          console.log(`Serverless function failed with status: ${serverlessResponse.status}`);
+        }
+      } catch (serverlessError) {
+        console.log('Serverless function failed, trying proxy services:', serverlessError);
+      }
+
+      // Fallback to proxy services
       const proxyServices = [
-        // ThingProxy - Generally more reliable than others
+        // Primary services
         `https://thingproxy.freeboard.io/fetch/${url}`,
-        // Codetabs - Alternative service
         `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-        // Proxy6 - Backup option
         `https://proxy6.ga/?url=${encodeURIComponent(url)}`,
-        // AllOrigins - Keep as fallback (updated API)
         `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-        // JSONProxy - Alternative service
         `https://jsonp.afeld.me/?url=${encodeURIComponent(url)}`,
+        // Additional fallback services
+        `https://cors-anywhere.herokuapp.com/${url}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}&apikey=test`,
+        `https://thingproxy.freeboard.io/fetch/${url}?bypass-cache=true`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
       ];
 
-
-      
       // Helper function to add timeout to fetch requests
       const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs: number = 15000) => {
         const controller = new AbortController();
@@ -431,16 +454,26 @@ function App() {
 
       // Try direct fetch first for sites that don't have CORS restrictions
       try {
+        console.log('Attempting direct fetch...');
         const directResponse = await fetchWithTimeout(url, {
           method: 'GET',
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
           }
         }, 10000); // 10 second timeout for direct fetch
         
         if (directResponse.ok) {
           const html = await directResponse.text();
+          console.log('Direct fetch successful, parsing content...');
           return parseHTML(html);
+        } else {
+          console.log(`Direct fetch failed with status: ${directResponse.status}`);
         }
       } catch (directError) {
         console.log('Direct fetch failed, trying proxy services:', directError);
@@ -458,6 +491,7 @@ function App() {
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.5',
               'Cache-Control': 'no-cache',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             }
           }, 20000); // 20 second timeout for proxy services
           
@@ -469,11 +503,17 @@ function App() {
           
           // Handle different proxy response formats
           if (proxyUrl.includes('allorigins.win')) {
-            const data = await response.json();
-            if (data.status?.http_code && data.status.http_code !== 200) {
-              throw new Error(`Target site returned ${data.status.http_code}`);
+            if (proxyUrl.includes('/raw?')) {
+              // Raw endpoint returns HTML directly
+              html = await response.text();
+            } else {
+              // Regular endpoint returns JSON
+              const data = await response.json();
+              if (data.status?.http_code && data.status.http_code !== 200) {
+                throw new Error(`Target site returned ${data.status.http_code}`);
+              }
+              html = data.contents;
             }
-            html = data.contents;
           } else if (proxyUrl.includes('codetabs.com')) {
             html = await response.text();
           } else if (proxyUrl.includes('jsonp.afeld.me')) {
@@ -486,6 +526,10 @@ function App() {
             } else {
               html = text;
             }
+          } else if (proxyUrl.includes('corsproxy.io')) {
+            html = await response.text();
+          } else if (proxyUrl.includes('cors-anywhere.herokuapp.com')) {
+            html = await response.text();
           } else {
             html = await response.text();
           }
@@ -493,6 +537,11 @@ function App() {
           // Check if we got actual HTML content
           if (!html || html.trim().length < 50) {
             throw new Error('Received empty or invalid response');
+          }
+          
+          // Additional validation - check if it looks like HTML
+          if (!html.includes('<html') && !html.includes('<body') && !html.includes('<div')) {
+            throw new Error('Response does not appear to be HTML content');
           }
           
           console.log(`Successfully fetched content using proxy service ${i + 1}`);

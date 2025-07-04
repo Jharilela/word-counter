@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-07-04T11:56:56.268Z",
+  "environment": {
+    "nodeEnv": "development",
+    "platform": "node",
+    "userAgent": "Node.js/22",
+    "location": "Server-side",
+    "timestamp": "2025-07-04T11:56:56.270Z",
+    "vercel": false
+  },
+  "url": "https://apple.com",
+  "tests": [
+    {
+      "success": true,
+      "method": "direct",
+      "textLength": 1015,
+      "sample": "Apple &nbsp; iPhone Meet the iPhone 16 family. Learn more Shop iPhone Built for Apple Intelligence. &nbsp; &nbsp; Shop &nbsp; &nbsp; F1 The Movie Starring Brad Pitt. In theaters now. Watch the trailer"
+    },
+    {
+      "success": true,
+      "method": "proxy_1",
+      "textLength": 1015,
+      "sample": "Apple &nbsp; iPhone Meet the iPhone 16 family. Learn more Shop iPhone Built for Apple Intelligence. &nbsp; &nbsp; Shop &nbsp; &nbsp; F1 The Movie Starring Brad Pitt. In theaters now. Watch the trailer"
+    }
+  ]
+}
