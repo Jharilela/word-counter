@@ -715,11 +715,19 @@ function App() {
       <GoogleAnalyticsDebug />
       {/* Header */}
       <header className="w-full flex items-center justify-between border-b border-muted-foreground/10 px-2 py-2 mb-6">
-        <div className="flex flex-col gap-0.5 text-left">
-          <span className="font-bold text-lg leading-tight">Word & Character Counter</span>
-          <span className="text-xs text-muted-foreground leading-tight text-left">
-            Online free word counter, character counter, PDF, DOCX, TXT, SRT, Markdown, website text analyzer
-          </span>
+        <div className="flex flex-row items-center gap-3">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            style={{ maxHeight: 36, maxWidth: 36 }}
+            className="block"
+          />
+          <div className="flex flex-col gap-0.5 text-left">
+            <span className="font-bold text-lg leading-tight">Word & Character Counter</span>
+            <span className="text-xs text-muted-foreground leading-tight text-left">
+              Online free word counter, character counter, PDF, DOCX, TXT, SRT, Markdown, website text analyzer
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <a href="https://github.com/Jharilela/word-counter" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-primary"><FaGithub size={20} /></a>
