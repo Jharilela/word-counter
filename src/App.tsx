@@ -396,18 +396,49 @@ function App() {
 
   const extractTextFromWebpage = async (url: string) => {
     try {
-      // Try multiple CORS proxy services for better reliability
+      // Updated list of more reliable CORS proxy services
       const proxyServices = [
+        // ThingProxy - Generally more reliable than others
+        `https://thingproxy.freeboard.io/fetch/${url}`,
+        // Codetabs - Alternative service
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        // Proxy6 - Backup option
+        `https://proxy6.ga/?url=${encodeURIComponent(url)}`,
+        // AllOrigins - Keep as fallback (updated API)
         `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-        `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        `https://cors-anywhere.herokuapp.com/${url}`
+        // JSONProxy - Alternative service
+        `https://jsonp.afeld.me/?url=${encodeURIComponent(url)}`,
       ];
 
-      let lastError: Error | null = null;
+
       
+      // Helper function to add timeout to fetch requests
+      const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs: number = 15000) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        
+        try {
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          return response;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
+        }
+      };
+
       // Try direct fetch first for sites that don't have CORS restrictions
       try {
-        const directResponse = await fetch(url);
+        const directResponse = await fetchWithTimeout(url, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          }
+        }, 10000); // 10 second timeout for direct fetch
+        
         if (directResponse.ok) {
           const html = await directResponse.text();
           return parseHTML(html);
@@ -420,7 +451,16 @@ function App() {
       for (let i = 0; i < proxyServices.length; i++) {
         try {
           const proxyUrl = proxyServices[i];
-          const response = await fetch(proxyUrl);
+          console.log(`Trying proxy service ${i + 1}: ${proxyUrl}`);
+          
+          const response = await fetchWithTimeout(proxyUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5',
+              'Cache-Control': 'no-cache',
+            }
+          }, 20000); // 20 second timeout for proxy services
           
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -435,17 +475,32 @@ function App() {
               throw new Error(`Target site returned ${data.status.http_code}`);
             }
             html = data.contents;
-          } else if (proxyUrl.includes('corsproxy.io')) {
+          } else if (proxyUrl.includes('codetabs.com')) {
             html = await response.text();
+          } else if (proxyUrl.includes('jsonp.afeld.me')) {
+            const text = await response.text();
+            // Parse JSONP response
+            const jsonpMatch = text.match(/callback\((.*)\)/);
+            if (jsonpMatch) {
+              const data = JSON.parse(jsonpMatch[1]);
+              html = data.contents || data.body || text;
+            } else {
+              html = text;
+            }
           } else {
             html = await response.text();
           }
           
+          // Check if we got actual HTML content
+          if (!html || html.trim().length < 50) {
+            throw new Error('Received empty or invalid response');
+          }
+          
+          console.log(`Successfully fetched content using proxy service ${i + 1}`);
           return parseHTML(html);
           
         } catch (error) {
           console.error(`Proxy service ${i + 1} failed:`, error);
-          lastError = error instanceof Error ? error : new Error('Unknown error');
           
           // If this was the last proxy service, don't continue
           if (i === proxyServices.length - 1) {
@@ -454,8 +509,8 @@ function App() {
         }
       }
       
-      // If all proxy services failed, throw the last error
-      throw lastError || new Error('All proxy services failed');
+      // If all proxy services failed, throw a comprehensive error
+      throw new Error('All proxy services failed to fetch the webpage. This might be due to:\n• The website blocking automated requests\n• All proxy services being temporarily unavailable\n• The website requiring authentication\n• Network connectivity issues\n\nAlternatives:\n• Copy and paste the text manually\n• Use the file upload option\n• Try a different URL from the same website');
       
     } catch (error) {
       console.error('Error fetching webpage:', error);
@@ -463,21 +518,38 @@ function App() {
       // Provide helpful error messages
       if (error instanceof Error) {
         if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
-          throw new Error('Unable to access the website. This could be due to:\n• The website blocking automated requests\n• Network connectivity issues\n• The website being temporarily unavailable\n\nTry using the file upload option instead.');
+          throw new Error('Network request failed. Please check your internet connection and try again, or use the file upload option instead.');
         }
         
         if (error.message.includes('CORS') || error.message.includes('cors')) {
           throw new Error('Website access blocked by security restrictions. Try copying and pasting the text manually or use the file upload option.');
         }
         
-        if (error.message.includes('404') || error.message.includes('500')) {
-          throw new Error('The webpage could not be found or the server returned an error. Please check the URL and try again.');
+        if (error.message.includes('404')) {
+          throw new Error('The webpage could not be found (404 error). Please check the URL and try again.');
+        }
+        
+        if (error.message.includes('403')) {
+          throw new Error('Access to this webpage is forbidden. The website may be blocking automated requests. Try copying the text manually.');
+        }
+        
+        if (error.message.includes('500')) {
+          throw new Error('The website server returned an error (500). Please try again later or use the file upload option.');
+        }
+        
+        if (error.message.includes('aborted') || error.message.includes('timeout')) {
+          throw new Error('Request timed out. The website may be slow or unresponsive. Please try again or use the file upload option.');
+        }
+        
+        // If it's our custom error message, throw it as-is
+        if (error.message.includes('All proxy services failed') || error.message.includes('alternatives:')) {
+          throw error;
         }
         
         throw new Error(`Unable to fetch webpage: ${error.message}`);
       }
       
-      throw new Error('An unexpected error occurred while fetching the webpage.');
+      throw new Error('An unexpected error occurred while fetching the webpage. Please try again or use the file upload option.');
     }
   };
 
