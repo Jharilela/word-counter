@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-07-04T11:37:28.527Z",
+  "environment": "development",
+  "platform": "node",
+  "url": "https://apple.com",
+  "tests": [
+    {
+      "success": true,
+      "method": "direct",
+      "textLength": 1015,
+      "sample": "Apple &nbsp; iPhone Meet the iPhone 16 family. Learn more Shop iPhone Built for Apple Intelligence. &nbsp; &nbsp; Shop &nbsp; &nbsp; F1 The Movie Starring Brad Pitt. In theaters now. Watch the trailer"
+    }
+  ]
+}

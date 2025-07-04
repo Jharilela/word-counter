@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Content Test - Apple.com</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #007aff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #1d1d1f;
+        }
+        
+        button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background: #0056cc;
+        }
+        
+        button:disabled {
+            background: #8e8e93;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e5e7;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007aff;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #8e8e93;
+            margin-top: 5px;
+        }
+        
+        .environment-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .environment-info strong {
+            color: #007aff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Fetch Content Test - Apple.com</h1>
+        
+        <div class="environment-info">
+            <strong>Environment:</strong> Browser<br>
+            <strong>User Agent:</strong> <span id="userAgent"></span><br>
+            <strong>Platform:</strong> <span id="platform"></span><br>
+            <strong>Timestamp:</strong> <span id="timestamp"></span>
+        </div>
+        
+        <div class="test-section">
+            <h2>🚀 Run Fetch Test</h2>
+            <p>This test will attempt to fetch content from https://apple.com using the same methods as your word counter app.</p>
+            
+            <button id="runTestBtn" onclick="runTest()">Start Test</button>
+            <button id="clearBtn" onclick="clearResults()">Clear Results</button>
+            
+            <div id="results" class="results info" style="display: none;">
+                Click "Start Test" to begin...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Test Statistics</h2>
+            <div class="stats" id="stats" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTests">0</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="successfulTests">0</div>
+                    <div class="stat-label">Successful</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="failedTests">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="duration">0ms</div>
+                    <div class="stat-label">Duration</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 Manual Test</h2>
+            <p>Test individual fetch methods:</p>
+            
+            <button onclick="testDirectFetch()">Test Direct Fetch</button>
+            <button onclick="testProxyServices()">Test Proxy Services</button>
+            <button onclick="testAllMethods()">Test All Methods</button>
+            
+            <div id="manualResults" class="results info" style="display: none;">
+                Results will appear here...
+            </div>
+        </div>
+    </div>
+
+    <script src="test-fetch-apple.js"></script>
+    <script>
+        // Initialize environment info
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('platform').textContent = navigator.platform;
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        
+        let testResults = [];
+        
+        function updateStats() {
+            const totalTests = testResults.length;
+            const successfulTests = testResults.filter(r => r.success).length;
+            const failedTests = totalTests - successfulTests;
+            
+            document.getElementById('totalTests').textContent = totalTests;
+            document.getElementById('successfulTests').textContent = successfulTests;
+            document.getElementById('failedTests').textContent = failedTests;
+            document.getElementById('stats').style.display = 'grid';
+        }
+        
+        function displayResults(results, elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (results.success) {
+                element.className = 'results success';
+            } else {
+                element.className = 'results error';
+            }
+            
+            element.textContent = JSON.stringify(results, null, 2);
+        }
+        
+        function log(message, elementId = 'results') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'results info';
+            element.textContent += message + '\n';
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        async function runTest() {
+            const resultsDiv = document.getElementById('results');
+            const runBtn = document.getElementById('runTestBtn');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.className = 'results loading';
+            resultsDiv.textContent = '🚀 Starting test...\n';
+            runBtn.disabled = true;
+            
+            try {
+                const results = await window.runFetchTest();
+                testResults = results.tests;
+                updateStats();
+                
+                resultsDiv.className = 'results success';
+                resultsDiv.textContent = JSON.stringify(results, null, 2);
+                
+                // Update duration
+                const duration = results.tests.reduce((total, test) => {
+                    return total + (test.duration || 0);
+                }, 0);
+                document.getElementById('duration').textContent = duration + 'ms';
+                
+            } catch (error) {
+                resultsDiv.className = 'results error';
+                resultsDiv.textContent = '💥 Test failed with error:\n' + error.message;
+            } finally {
+                runBtn.disabled = false;
+            }
+        }
+        
+        async function testDirectFetch() {
+            log('🔍 Testing direct fetch...', 'manualResults');
+            try {
+                const result = await window.testDirectFetch();
+                displayResults(result, 'manualResults');
+                testResults.push(result);
+                updateStats();
+            } catch (error) {
+                log('❌ Direct fetch test failed: ' + error.message, 'manualResults');
+            }
+        }
+        
+        async function testProxyServices() {
+            log('🔍 Testing proxy services...', 'manualResults');
+            try {
+                const result = await window.testProxyServices();
+                displayResults(result, 'manualResults');
+                testResults.push(result);
+                updateStats();
+            } catch (error) {
+                log('❌ Proxy services test failed: ' + error.message, 'manualResults');
+            }
+        }
+        
+        async function testAllMethods() {
+            log('🔍 Testing all methods...', 'manualResults');
+            try {
+                const directResult = await window.testDirectFetch();
+                displayResults(directResult, 'manualResults');
+                testResults.push(directResult);
+                
+                if (!directResult.success) {
+                    const proxyResult = await window.testProxyServices();
+                    displayResults(proxyResult, 'manualResults');
+                    testResults.push(proxyResult);
+                }
+                
+                updateStats();
+            } catch (error) {
+                log('❌ All methods test failed: ' + error.message, 'manualResults');
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('manualResults').style.display = 'none';
+            document.getElementById('stats').style.display = 'none';
+            testResults = [];
+        }
+        
+        // Auto-run test on page load (optional)
+        // window.addEventListener('load', () => {
+        //     setTimeout(runTest, 1000);
+        // });
+    </script>
+</body>
+</html> 

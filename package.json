@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:fetch": "node test-fetch-apple-simple.js",
+    "test:fetch:local": "node test-fetch-apple-simple.js && echo 'Local test completed'",
+    "test:fetch:browser": "echo 'Open test-fetch-apple.html in your browser to test fetch functionality'"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
