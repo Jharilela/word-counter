@@ -16,23 +16,28 @@ if (gaMeasurementId) {
   
   // Define gtag function
   (window as any).gtag = function (...args: any[]) { 
-    (window as any).dataLayer.push(args); 
+    (window as any).dataLayer.push(arguments); 
   };
+  
+  // Set default consent to 'denied'
+  (window as any).gtag('consent', 'default', {
+    'analytics_storage': 'denied'
+  });
   
   // Inject GA script
   const script = document.createElement('script');
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`;
   
-  // Wait for script to load before initializing
+  // Wait for script to load before sending initial config
   script.onload = () => {
     console.log('Google Analytics: Script loaded successfully');
     (window as any).gtag('js', new Date());
+    // Send initial config without a pageview, as it will be handled by the App component
     (window as any).gtag('config', gaMeasurementId, {
-      page_title: document.title,
-      page_location: window.location.href
+      'send_page_view': false 
     });
-    console.log('Google Analytics: Configuration complete');
+    console.log('Google Analytics: Initial configuration complete (page view deferred)');
   };
   
   script.onerror = () => {

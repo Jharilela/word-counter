@@ -28,11 +28,15 @@ export const trackEvent = (action: string, category: string, label?: string, val
 
 export const trackPageView = (page_title?: string, page_location?: string) => {
   if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('config', import.meta.env.VITE_GA_MEASUREMENT_ID, {
+    window.gtag('event', 'page_view', {
       page_title: page_title || document.title,
-      page_location: page_location || window.location.href
+      page_location: page_location || window.location.href,
+      send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
     });
-    console.log('Google Analytics: Page view tracked', { page_title, page_location });
+    console.log('Google Analytics: Page view tracked', { 
+      page_title: page_title || document.title, 
+      page_location: page_location || window.location.href 
+    });
   } else {
     console.warn('Google Analytics: gtag not available for page view tracking');
   }
