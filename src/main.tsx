@@ -15,7 +15,7 @@ if (gaMeasurementId) {
   (window as any).dataLayer = (window as any).dataLayer || [];
   
   // Define gtag function
-  (window as any).gtag = function (...args: any[]) { 
+  (window as any).gtag = function () { 
     (window as any).dataLayer.push(arguments); 
   };
   
