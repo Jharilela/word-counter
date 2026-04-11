@@ -731,7 +731,7 @@ function App() {
         </div>
         <div className="flex items-center gap-3">
           <a href="https://github.com/Jharilela/word-counter" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-primary"><FaGithub size={20} /></a>
-          <a href="https://discord.com/users/jym.god" target="_blank" rel="noopener noreferrer" aria-label="Discord (@jym.god)" className="hover:text-primary"><FaDiscord size={20} /></a>
+          <a href="https://discord.com/users/jay.ai.automation" target="_blank" rel="noopener noreferrer" aria-label="Discord (@jay.ai.automation)" className="hover:text-primary"><FaDiscord size={20} /></a>
           <a href="mailto:tools@emp0.com" aria-label="Email" className="hover:text-primary"><FaEnvelope size={20} /></a>
           <a href="https://emp0.com" target="_blank" rel="noopener noreferrer" aria-label="emp0 website" className="hover:text-primary"><FaGlobe size={20} /></a>
         </div>

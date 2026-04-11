@@ -106,7 +106,7 @@ If not set, analytics is disabled and a warning is logged in the console.
 ## 👤 Credits & Socials
 - **Developer:** [emp0](https://emp0.com)
 - **GitHub:** [Jharilela/word-counter](https://github.com/Jharilela/word-counter)
-- **Discord:** [@jym.god](https://discord.com/users/jym.god)
+- **Discord:** [@jay.ai.automation](https://discord.com/users/jay.ai.automation)
 - **Email:** tools@emp0.com
 - **Website:** [emp0.com](https://emp0.com)
 
